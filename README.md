@@ -1,161 +1,167 @@
 # ◈ Gestalt
 
-> **让观众成为你作品的一部分**  
-> A framework that turns your audience into co-creators
+> **A framework that turns your audience into co-creators**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
----
-
-## 这是什么？
-
-Gestalt 是一个**互动音乐表演系统**，让你的观众可以通过手机参与演出：
-
-- 🎭 **演员** 通过摄像头进行动作捕捉，控制音乐参数
-- 👥 **观众** 用手机触摸屏幕，集体影响声音
-- 🎵 **所有数据** 实时发送到 Max/MSP 进行音频合成
-
-**适合**：互动音乐会、沉浸式剧场、新媒体艺术展、教学演示
+**[English](#what-is-this) | [中文](README_CN.md)**
 
 ---
 
-## 🚀 两种安装方式
+## What is this?
 
-### 方式一：Docker（推荐新手）⭐
+Gestalt is an **interactive music performance system** that enables audience participation via mobile phones:
 
-**优点**：一键启动，无需安装 Node.js 等开发工具
+- 🎭 **Performers** control music parameters through camera-based motion capture
+- 👥 **Audience** collectively influences sound by touching their phone screens
+- 🎵 **All data** is sent in real-time to Max/MSP for audio synthesis
 
-**⚠️ 注意**：Docker 模式下摄像头动作捕捉需要在浏览器中运行（不影响使用）
+**Use cases**: Interactive concerts, immersive theater, new media art exhibitions, educational demos
+
+---
+
+## 🚀 Two Ways to Install
+
+### Method 1: Docker (Recommended for beginners) ⭐
+
+**Pros**: One-click startup, no need to install Node.js
 
 ```bash
-# 1. 安装 Docker Desktop
-#    下载地址：https://www.docker.com/products/docker-desktop/
-#    安装后启动，等待显示 "Docker is running"
+# 1. Install Docker Desktop
+#    Download: https://www.docker.com/products/docker-desktop/
 
-# 2. 下载本项目（二选一）
-#    方式 A：用 git 下载
-git clone https://github.com/YOUR_USERNAME/gestalt.git
-#    方式 B：从 GitHub 下载 ZIP 并解压
+# 2. Clone the project
+git clone https://github.com/Purest-11/Gestalt.git
+cd Gestalt
 
-# 3. 进入项目目录
-cd gestalt
-
-# 4. 一键启动
+# 3. Start
 ./docker-start.sh
 ```
 
-首次启动需要下载镜像，约 **2-5 分钟**。
+First launch takes **2-5 minutes** to download images.
 
-👉 **详细教程**：[Docker 完整指南](docs/DOCKER_GUIDE.md)
+👉 **Full guide**: [Docker Guide (English)](docs/DOCKER_GUIDE_EN.md)
 
 ---
 
-### 方式二：直接运行
+### Method 2: Direct Run
 
-**适合**：需要更多控制权，或 Docker 安装有困难的用户
+**For**: Users who want more control
 
 ```bash
-# 1. 安装 Node.js（如果没有）
-#    下载地址：https://nodejs.org/
-#    下载 LTS 版本（绿色按钮），双击安装
+# 1. Install Node.js (if not installed)
+#    Download: https://nodejs.org/
 
-# 2. 下载项目
-git clone https://github.com/YOUR_USERNAME/gestalt.git
-cd gestalt
-
-# 3. 安装依赖
+# 2. Clone and install
+git clone https://github.com/Purest-11/Gestalt.git
+cd Gestalt
 npm install
 
-# 4. 启动
+# 3. Start
 ./start.sh
 ```
 
-👉 **详细教程**：[快速开始](QUICK_START.md) | [中文版](快速开始.md)
+👉 **Full guide**: [Quick Start (English)](QUICK_START.md)
 
 ---
 
-## 📱 启动后做什么？
+## 📱 After Starting
 
-启动后会看到交互式菜单，**选择 1（本地模式）** 开始测试。
+You'll see an interactive menu. **Select option 1** (Local Mode) to test.
 
-系统启动后会显示访问地址：
+Access URLs will be displayed:
 
-| 页面 | 地址 | 说明 |
-|------|------|------|
-| 动作捕捉 | `http://localhost:3000/mocap/?performer=1` | 演员用，需要摄像头 |
-| 观众触摸 | `http://你的IP:3002/audience-touch/` | 观众用手机访问 |
-| 监控面板 | `http://localhost:3002/?performer=audience` | 查看观众粒子 |
+| Page | URL | Description |
+|------|-----|-------------|
+| Motion Capture | `http://localhost:3000/mocap/?performer=1` | For performer, needs camera |
+| Audience Touch | `http://YOUR_IP:3002/audience-touch/` | For audience on phones |
+| Monitor Panel | `http://localhost:3002/?performer=audience` | View audience as particles |
 
-**测试流程**：
-1. 打开动作捕捉页面 → 允许摄像头 → 挥手看追踪效果
-2. 用手机扫描控制面板中的二维码 → 触摸滑动
-3. 查看监控面板 → 看到观众变成粒子
+**Test flow**:
+1. Open Motion Capture → Allow camera → Wave your hands
+2. Scan QR code on your phone → Touch and swipe
+3. Check Monitor → See audience become particles
 
 ---
 
-## 🎹 连接 Max/MSP
+## 🎹 Connect to Max/MSP
 
-系统通过 OSC 协议发送数据：
+The system sends OSC data:
 
-| 数据类型 | UDP 端口 | 说明 |
-|---------|----------|------|
-| 演员数据 | 7400 | 动作捕捉、控制器 |
-| 观众数据 | 7402 | 触摸、手势 |
+| Data Type | UDP Port | Description |
+|-----------|----------|-------------|
+| Performer | 7400 | Motion capture, controllers |
+| Audience | 7402 | Touch, gestures |
 
-**在 Max 中创建接收**：
+**In Max, create receiver**:
 ```
-[udpreceive 7400]    ← 演员数据
-[udpreceive 7402]    ← 观众数据
+[udpreceive 7400]    ← Performer data
+[udpreceive 7402]    ← Audience data
       |
 [oscparse]
       |
 [route /performer1 /audience]
 ```
 
-👉 **完整 OSC 地址列表**：[Max/MSP 参考手册](docs/MAXMSP_QUICK_REF.md)
+👉 **Full OSC reference**: [Max/MSP Quick Reference (English)](docs/MAXMSP_QUICK_REF_EN.md)
 
 ---
 
-## 🌐 演出场景选择
+## 🌐 Performance Scenarios
 
-| 场景 | 菜单选择 | 说明 |
-|------|---------|------|
-| **本地演出** | 选项 1 | 所有人连同一 WiFi |
-| **国际演出** | 选项 2 | 观众可用任何网络（Cloudflare） |
-| **国内演出** | 选项 3 | 观众可用任何网络（cpolar，国内更快） |
-| **大型演出** | 选项 4-7 | 双机模式，分担负载 |
-
----
-
-## 📖 文档索引
-
-| 我想... | 看这个 |
-|---------|--------|
-| 快速跑起来（Docker） | [Docker 指南](docs/DOCKER_GUIDE.md) |
-| 快速跑起来（直接运行） | [快速开始](快速开始.md) |
-| 了解所有 OSC 数据 | [Max/MSP 参考](docs/MAXMSP_QUICK_REF.md) |
-| 处理观众数据 | [观众数据指南](docs/MAXMSP_AUDIENCE_GUIDE.md) |
+| Scenario | Menu Option | Description |
+|----------|-------------|-------------|
+| **Local venue** | Option 1 | Everyone on same WiFi |
+| **International** | Option 2 | Audience on any network (Cloudflare) |
+| **China** | Option 3 | Audience on any network (cpolar) |
+| **Large venue** | Options 4-7 | Dual-machine mode |
 
 ---
 
-## 📜 引用
+## 📖 Documentation
 
-如果在研究或作品中使用了 Gestalt：
+| I want to... | Read this |
+|--------------|-----------|
+| Quick start with Docker | [Docker Guide (EN)](docs/DOCKER_GUIDE_EN.md) |
+| Quick start without Docker | [Quick Start (EN)](QUICK_START.md) |
+| See all OSC addresses | [Max/MSP Reference (EN)](docs/MAXMSP_QUICK_REF_EN.md) |
+| Handle audience data | [Audience Data Guide (EN)](docs/MAXMSP_AUDIENCE_GUIDE_EN.md) |
+
+---
+
+## 📊 Performance
+
+Tested on MacBook Pro (M-series):
+
+| Concurrent Users | Status |
+|-----------------|--------|
+| 50 | ✅ Stable |
+| 100 | ✅ Stable |
+| 150 | ✅ Stable |
+| 200 | ✅ Stable (batched connections) |
+
+Run your own test: `./run-stress-test.sh`
+
+---
+
+## 📜 Citation
+
+If you use Gestalt in your research or creative work:
 
 ```bibtex
 @software{gestalt2025,
-  author = {[Your Name]},
-  title = {Gestalt: Real-Time Performer-Audience Collaboration Framework},
+  author = {Sitong Wu},
+  title = {Gestalt: A Symbiotic Framework for Real-Time Collaboration between Performers and Mass Audiences},
   year = {2025},
-  url = {https://github.com/YOUR_USERNAME/gestalt}
+  url = {https://github.com/Purest-11/Gestalt}
 }
 ```
 
 ---
 
-## 📄 许可证
+## 📄 License
 
-MIT License — 可自由使用、修改、分发
+MIT License — Free to use, modify, and distribute
 
 ---
 

@@ -22,9 +22,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/[username]/gestalt.git"
+    "url": "https://github.com/Purest-11/Gestalt.git"
   },
-  "homepage": "https://github.com/[username]/gestalt#readme",
+  "homepage": "https://github.com/Purest-11/Gestalt#readme",
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",

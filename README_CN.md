@@ -4,6 +4,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+**[English](README.md) | [中文](#这是什么)**
+
 ---
 
 ## 这是什么？
@@ -24,22 +26,15 @@ Gestalt 是一个**互动音乐表演系统**，让你的观众可以通过手�
 
 **优点**：一键启动，无需安装 Node.js 等开发工具
 
-**⚠️ 注意**：Docker 模式下摄像头动作捕捉需要在浏览器中运行（不影响使用）
-
 ```bash
 # 1. 安装 Docker Desktop
 #    下载地址：https://www.docker.com/products/docker-desktop/
-#    安装后启动，等待显示 "Docker is running"
 
-# 2. 下载本项目（二选一）
-#    方式 A：用 git 下载
-git clone https://github.com/YOUR_USERNAME/gestalt.git
-#    方式 B：从 GitHub 下载 ZIP 并解压
+# 2. 下载本项目
+git clone https://github.com/Purest-11/Gestalt.git
+cd Gestalt
 
-# 3. 进入项目目录
-cd gestalt
-
-# 4. 一键启动
+# 3. 一键启动
 ./docker-start.sh
 ```
 
@@ -47,7 +42,7 @@ cd gestalt
 
 **国内用户**：如果下载很慢，运行 `./docker-mirror-setup.sh` 配置镜像加速。
 
-👉 **详细教程**：[Docker 完整指南](docs/DOCKER_GUIDE.md)
+👉 **详细教程**：[Docker 完整指南（中文）](docs/DOCKER_GUIDE.md)
 
 ---
 
@@ -58,11 +53,10 @@ cd gestalt
 ```bash
 # 1. 安装 Node.js（如果没有）
 #    下载地址：https://nodejs.org/
-#    下载 LTS 版本（绿色按钮），双击安装
 
 # 2. 下载项目
-git clone https://github.com/YOUR_USERNAME/gestalt.git
-cd gestalt
+git clone https://github.com/Purest-11/Gestalt.git
+cd Gestalt
 
 # 3. 安装依赖
 npm install
@@ -71,7 +65,7 @@ npm install
 ./start.sh
 ```
 
-👉 **详细教程**：[快速开始](快速开始.md)
+👉 **详细教程**：[快速开始（中文）](快速开始.md)
 
 ---
 
@@ -113,7 +107,7 @@ npm install
 [route /performer1 /audience]
 ```
 
-👉 **完整 OSC 地址列表**：[Max/MSP 参考手册](docs/MAXMSP_QUICK_REF.md)
+👉 **完整 OSC 地址列表**：[Max/MSP 参考手册（中文）](docs/MAXMSP_QUICK_REF.md)
 
 ---
 
@@ -132,10 +126,10 @@ npm install
 
 | 我想... | 看这个 |
 |---------|--------|
-| 快速跑起来（Docker） | [Docker 指南](docs/DOCKER_GUIDE.md) |
-| 快速跑起来（直接运行） | [快速开始](快速开始.md) |
-| 了解所有 OSC 数据 | [Max/MSP 参考](docs/MAXMSP_QUICK_REF.md) |
-| 处理观众数据 | [观众数据指南](docs/MAXMSP_AUDIENCE_GUIDE.md) |
+| 快速跑起来（Docker） | [Docker 指南（中文）](docs/DOCKER_GUIDE.md) |
+| 快速跑起来（直接运行） | [快速开始（中文）](快速开始.md) |
+| 了解所有 OSC 数据 | [Max/MSP 参考（中文）](docs/MAXMSP_QUICK_REF.md) |
+| 处理观众数据 | [观众数据指南（中文）](docs/MAXMSP_AUDIENCE_GUIDE.md) |
 
 ---
 
@@ -160,10 +154,10 @@ MacBook Pro (M 系列) 测试结果：
 
 ```bibtex
 @software{gestalt2025,
-  author = {[Your Name]},
-  title = {Gestalt: Real-Time Performer-Audience Collaboration Framework},
+  author = {Sitong Wu},
+  title = {Gestalt: A Symbiotic Framework for Real-Time Collaboration between Performers and Mass Audiences},
   year = {2025},
-  url = {https://github.com/YOUR_USERNAME/gestalt}
+  url = {https://github.com/Purest-11/Gestalt}
 }
 ```
 

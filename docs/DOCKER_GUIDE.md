@@ -268,7 +268,7 @@ ssh user@your-server-ip
 curl -fsSL https://get.docker.com | sh
 
 # 3. 克隆代码
-git clone https://github.com/your-repo/osc.git
+git clone https://github.com/Purest-11/Gestalt.git
 cd osc
 
 # 4. 启动
@@ -484,8 +484,9 @@ docker-compose up -d --build
 
 ## 🔗 相关文档
 
-- [部署方案总览](DEPLOYMENT_SOLUTIONS.md)
-- [主 README](README.md)
+- [快速开始](../快速开始.md)
+- [Max/MSP 参考](MAXMSP_QUICK_REF.md)
+- [观众数据指南](MAXMSP_AUDIENCE_GUIDE.md)
 
 ---
 
