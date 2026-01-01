@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Audio 引擎 - OSC 控制</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            padding: 20px;
+        }
+        
+        .container {
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            font-size: 48px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+        }
+        
+        .subtitle {
+            text-align: center;
+            font-size: 18px;
+            color: #aaa;
+            margin-bottom: 40px;
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .status-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ff3333;
+            box-shadow: 0 0 20px rgba(255, 51, 51, 0.8);
+            animation: pulse 2s infinite;
+        }
+        
+        .status-indicator.connected {
+            background: #00ff88;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .status-text {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .start-button {
+            width: 100%;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        .start-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(0, 255, 255, 0.5);
+        }
+        
+        .start-button:active {
+            transform: translateY(0);
+        }
+        
+        .start-button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .info-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .info-label {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #00ffff;
+        }
+        
+        .log-container {
+            margin-top: 30px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .log-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #00ffff;
+        }
+        
+        .log-entry {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            padding: 5px;
+            border-left: 3px solid #00ffff;
+            margin-bottom: 5px;
+            padding-left: 10px;
+        }
+        
+        .log-entry.error {
+            border-left-color: #ff3333;
+            color: #ff9999;
+        }
+        
+        .log-entry.warning {
+            border-left-color: #ffaa00;
+            color: #ffcc88;
+        }
+        
+        .visualizer {
+            margin-top: 30px;
+            height: 100px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .wave {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 50%;
+            background: linear-gradient(180deg, rgba(0, 255, 255, 0.5), rgba(255, 0, 255, 0.5));
+            filter: blur(20px);
+            animation: wave 3s ease-in-out infinite;
+        }
+        
+        @keyframes wave {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 WEB AUDIO ENGINE</h1>
+        <p class="subtitle">替代 MaxMSP + Pigments 的浏览器音频引擎</p>
+        
+        <div class="status">
+            <div class="status-indicator" id="statusIndicator"></div>
+            <div class="status-text" id="statusText">未连接</div>
+        </div>
+        
+        <button class="start-button" id="startButton">
+            启动音频引擎
+        </button>
+        
+        <button class="start-button" id="toggleMusicButton" style="display: none; margin-top: 20px; background: linear-gradient(45deg, #ff6b6b, #feca57);">
+            ⏸️ 暂停生成式音乐
+        </button>
+        
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="info-label">WebSocket</div>
+                <div class="info-value" id="wsStatus">❌</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">接收消息</div>
+                <div class="info-value" id="messageCount">0</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">延迟 (ms)</div>
+                <div class="info-value" id="latency">--</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">CPU占用</div>
+                <div class="info-value" id="cpuUsage">低</div>
+            </div>
+        </div>
+        
+        <div class="visualizer">
+            <div class="wave"></div>
+        </div>
+        
+        <div class="log-container">
+            <div class="log-title">📋 系统日志</div>
+            <div id="logContent">
+                <div class="log-entry">等待启动...</div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { audioEngine } from './audio-engine.js';
+        import { getAllAddresses } from './osc-mapping.js';
+        
+        // UI 元素
+        const startButton = document.getElementById('startButton');
+        const toggleMusicButton = document.getElementById('toggleMusicButton');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const wsStatus = document.getElementById('wsStatus');
+        const messageCount = document.getElementById('messageCount');
+        const latency = document.getElementById('latency');
+        const logContent = document.getElementById('logContent');
+        
+        let messageCounter = 0;
+        let ws = null;
+        let lastMessageTime = Date.now();
+        
+        // 添加日志
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logContent.appendChild(entry);
+            logContent.scrollTop = logContent.scrollHeight;
+            
+            // 限制日志数量
+            if (logContent.children.length > 50) {
+                logContent.removeChild(logContent.children[0]);
+            }
+        }
+        
+        // 连接 WebSocket
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}`;
+            
+            addLog(`正在连接 WebSocket: ${wsUrl}...`);
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                addLog('✅ WebSocket 已连接');
+                wsStatus.textContent = '✅';
+                statusIndicator.classList.add('connected');
+                statusText.textContent = '已连接';
+                
+                // 注册为音频引擎客户端
+                ws.send(JSON.stringify({
+                    type: 'register_audio_engine',
+                    timestamp: Date.now()
+                }));
+                
+                addLog('🎵 已注册为音频引擎');
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    
+                    // 处理 OSC 消息
+                    if (data.type === 'osc_to_audio') {
+                        audioEngine.handleOSCMessage(data.address, data.args);
+                        
+                        // 更新统计
+                        messageCounter++;
+                        messageCount.textContent = messageCounter;
+                        
+                        // 计算延迟
+                        const now = Date.now();
+                        const msgLatency = now - (data.timestamp || now);
+                        latency.textContent = msgLatency < 100 ? msgLatency : '100+';
+                        lastMessageTime = now;
+                    }
+                } catch (error) {
+                    addLog(`解析消息失败: ${error.message}`, 'error');
+                }
+            };
+            
+            ws.onerror = (error) => {
+                addLog(`WebSocket 错误: ${error}`, 'error');
+            };
+            
+            ws.onclose = () => {
+                addLog('❌ WebSocket 已断开', 'warning');
+                wsStatus.textContent = '❌';
+                statusIndicator.classList.remove('connected');
+                statusText.textContent = '连接断开';
+                
+                // 5秒后重连
+                setTimeout(() => {
+                    addLog('尝试重新连接...');
+                    connectWebSocket();
+                }, 5000);
+            };
+        }
+        
+        // 切换生成式音乐按钮事件
+        toggleMusicButton.addEventListener('click', () => {
+            audioEngine.toggleGenerativeMusic();
+            
+            if (audioEngine.generativeMusic.isPlaying) {
+                toggleMusicButton.textContent = '⏸️ 暂停生成式音乐';
+                toggleMusicButton.style.background = 'linear-gradient(45deg, #ff6b6b, #feca57)';
+                addLog('▶️ 生成式音乐已恢复');
+            } else {
+                toggleMusicButton.textContent = '▶️ 播放生成式音乐';
+                toggleMusicButton.style.background = 'linear-gradient(45deg, #00ff88, #00ffff)';
+                addLog('⏸️ 生成式音乐已暂停');
+            }
+        });
+        
+        // 启动按钮事件
+        startButton.addEventListener('click', async () => {
+            startButton.disabled = true;
+            startButton.textContent = '初始化中...';
+            
+            try {
+                addLog('正在初始化音频引擎...');
+                await audioEngine.init();
+                
+                addLog('✅ 音频引擎初始化成功');
+                startButton.textContent = '✅ 音频引擎运行中';
+                startButton.style.background = 'linear-gradient(45deg, #00ff88, #00ffff)';
+                
+                // 显示音乐控制按钮
+                toggleMusicButton.style.display = 'block';
+                
+                // 连接 WebSocket
+                connectWebSocket();
+                
+                // 打印支持的 OSC 地址
+                const addresses = getAllAddresses();
+                addLog(`📡 支持 ${addresses.length} 个 OSC 地址`);
+                
+            } catch (error) {
+                addLog(`❌ 初始化失败: ${error.message}`, 'error');
+                startButton.disabled = false;
+                startButton.textContent = '重试启动';
+            }
+        });
+        
+        // 页面卸载时清理
+        window.addEventListener('beforeunload', () => {
+            if (audioEngine) {
+                audioEngine.dispose();
+            }
+            if (ws) {
+                ws.close();
+            }
+        });
+        
+        // 初始日志
+        addLog('🎵 Web Audio 引擎已加载');
+        addLog('📌 点击"启动音频引擎"按钮开始');
+        addLog(`📡 系统支持 ${getAllAddresses().length} 个 OSC 控制地址`);
+    </script>
+</body>
+</html>

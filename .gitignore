@@ -1,0 +1,52 @@
+# ═══════════════════════════════════════════════════════════════════
+# ◈ Gestalt - Git Ignore Configuration
+# ═══════════════════════════════════════════════════════════════════
+
+# Dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/
+.idea/
+*.code-workspace
+*.swp
+*.swo
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist/
+build/
+
+# Language preference (user-specific)
+.lang
+.test_lang
+
+# Tunnel binaries (download separately)
+cloudflared
+cpolar
+
+# Process ID files
+.pids/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Test output
+coverage/
+
+# Docker volumes (if any)
+data/

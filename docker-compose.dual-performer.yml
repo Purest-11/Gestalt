@@ -1,0 +1,56 @@
+# ═══════════════════════════════════════════════════════════════════
+# 🎭 双机模式 - 演员机配置
+# 
+# 演员机职责：MediaPipe 动作捕捉 + 本地 Max MSP
+# 
+# 使用方法：
+#   docker-compose -f docker-compose.dual-performer.yml up -d
+#
+# ⚠️ 重要：演员机需要摄像头访问，Docker 在 macOS 上不支持摄像头
+#          建议演员机使用直接运行版本：./start.sh → 选项 4
+# ═══════════════════════════════════════════════════════════════════
+
+version: '3.8'
+
+services:
+  # ═══════════════════════════════════════════════════════════════
+  # 🎭 演员系统（端口 3000，OSC 7400）
+  # ═══════════════════════════════════════════════════════════════
+  performer:
+    build: .
+    container_name: osc-performer-dual
+    restart: unless-stopped
+    # 使用宿主机网络模式（仅 Linux 支持，macOS/Windows 不支持）
+    # 这样可以接收局域网内的 UDP 广播
+    network_mode: host
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - OSC_PORT=7400
+      - PERFORMER_ID=1
+      # 发送到本地 Max MSP
+      - USE_BROADCAST=false
+      - OSC_HOST=127.0.0.1
+    volumes:
+      - ./logs/performer:/app/logs
+
+# ═══════════════════════════════════════════════════════════════
+# 💡 使用说明
+# ═══════════════════════════════════════════════════════════════
+#
+# ⚠️ macOS/Windows 用户请注意：
+#    Docker Desktop 不支持 network_mode: host
+#    请使用直接运行版本：./start.sh → 选项 4
+#
+# 🐧 Linux 用户可以使用此配置：
+#    docker-compose -f docker-compose.dual-performer.yml up -d
+#
+# 📍 访问地址：
+#    MediaPipe 动捕: http://localhost:3000/mocap/?performer=1
+#
+# 🎮 Max MSP 配置（在演员机运行）：
+#    演员: [udpreceive 7400]
+#    观众: [udpreceive 7402] ← 接收视觉机广播
+#
+# ═══════════════════════════════════════════════════════════════
+

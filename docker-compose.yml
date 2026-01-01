@@ -1,0 +1,129 @@
+# ═══════════════════════════════════════════════════════════════════
+# ◈ Gestalt - Docker Compose Configuration
+# 
+# Usage:
+#   Start:  docker-compose up -d
+#   Stop:   docker-compose down
+#   Logs:   docker-compose logs -f
+# ═══════════════════════════════════════════════════════════════════
+
+version: '3.8'
+
+services:
+  # ═══════════════════════════════════════════════════════════════
+  # 🎭 Performer System (Port 3000, OSC 7400)
+  # ═══════════════════════════════════════════════════════════════
+  performer:
+    build: .
+    container_name: gestalt-performer
+    restart: unless-stopped
+    ports:
+      # Web 服务
+      - "3000:3000"
+      # OSC UDP 端口（用于接收）
+      - "7400:7400/udp"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - OSC_PORT=7400
+      - PERFORMER_ID=1
+      # Docker 中禁用广播，改为直接发送到宿主机
+      - USE_BROADCAST=false
+      # host.docker.internal 是 Docker Desktop 中指向宿主机的特殊地址
+      - OSC_HOST=host.docker.internal
+    extra_hosts:
+      # 确保 host.docker.internal 在 Linux 上也能工作
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # 挂载日志目录（可选）
+      - ./logs/performer:/app/logs
+    networks:
+      - gestalt-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ═══════════════════════════════════════════════════════════════
+  # 👥 Audience System (Port 3002, OSC 7402)
+  # ═══════════════════════════════════════════════════════════════
+  audience:
+    build: .
+    container_name: gestalt-audience
+    restart: unless-stopped
+    ports:
+      # Web 服务
+      - "3002:3002"
+      # OSC UDP 端口（用于接收）
+      - "7402:7402/udp"
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      - OSC_PORT=7402
+      - PERFORMER_ID=audience
+      # Docker 中禁用广播，改为直接发送到宿主机
+      - USE_BROADCAST=false
+      # host.docker.internal 是 Docker Desktop 中指向宿主机的特殊地址
+      - OSC_HOST=host.docker.internal
+    extra_hosts:
+      # 确保 host.docker.internal 在 Linux 上也能工作
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # 挂载日志目录（可选）
+      - ./logs/audience:/app/logs
+    networks:
+      - gestalt-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3002/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      - performer
+
+# ═══════════════════════════════════════════════════════════════
+# Network Configuration
+# ═══════════════════════════════════════════════════════════════
+networks:
+  gestalt-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+# ═══════════════════════════════════════════════════════════════
+# Usage Guide
+# ═══════════════════════════════════════════════════════════════
+# 
+# 🚀 Start:
+#   docker-compose up -d
+#
+# 🛑 Stop:
+#   docker-compose down
+#
+# 📊 Logs:
+#   docker-compose logs -f              # All services
+#   docker-compose logs -f performer    # Performer only
+#   docker-compose logs -f audience     # Audience only
+#
+# 🔄 Restart:
+#   docker-compose restart
+#
+# 📍 Access URLs:
+#   Performer:     http://localhost:3000/?performer=1
+#   Motion Capture: http://localhost:3000/mocap/?performer=1
+#   Audience Touch: http://localhost:3002/audience-touch/
+#   Stage Monitor:  http://localhost:3002/?performer=audience
+#
+# 🎮 Max/MSP Configuration (run on host machine):
+#   Performer: [udpreceive 7400]
+#   Audience:  [udpreceive 7402]
+#
+# 💡 Note:
+#   OSC messages are sent to host via host.docker.internal
+#   Ensure Max/MSP is running on host and listening on ports
+#
+# ═══════════════════════════════════════════════════════════════

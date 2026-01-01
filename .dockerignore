@@ -1,0 +1,65 @@
+# ═══════════════════════════════════════════════════════════════════
+# Docker 构建时忽略的文件
+# ═══════════════════════════════════════════════════════════════════
+
+# 依赖目录（会在容器内重新安装）
+node_modules/
+
+# 日志文件
+logs/
+*.log
+
+# PID 文件
+.pids/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# 文档（可选保留）
+# *.md
+
+# 备份文件
+backup_*/
+*.backup
+
+# 测试文件
+test-*.html
+test-*.sh
+
+# Max MSP patches（不需要在容器中）
+*.maxpat
+
+# 其他工程文件
+20251012动作捕捉/
+实验电子音乐生成demo/
+gemini3
+
+# 敏感信息
+.env
+.env.local
+*.pem
+*.key
+
+# 隧道工具（本地使用，不需要打包到 Docker）
+cloudflared
+cloudflared.tgz
+cpolar
+cpolar.yml
+
+# 启动脚本（本地使用）
+start.sh
+start-*.sh
+stop-all.sh
+
+# 临时文件
+*.tmp
+.cursor/
+

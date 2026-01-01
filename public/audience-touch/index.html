@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gestalt · Touch</title>
+    
+    <!-- i18n Translation Script -->
+    <script src="/lang/translations.js"></script>
+    
+    <!-- 引入 Google Fonts 科技感字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- 调试控制台样式 -->
+    <style>
+        #debug-console {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #0f0;
+            font-family: monospace;
+            font-size: 10px;
+            overflow-y: auto;
+            z-index: 9999;
+            pointer-events: none; /* 让点击穿透 */
+            padding: 5px;
+            border-top: 1px solid #333;
+            display: none; /* 默认隐藏，点击 3 次显示 */
+        }
+        .log-error { color: #ff3333; }
+        .log-warn { color: #ffff33; }
+        .log-info { color: #cccccc; }
+        
+        /* Language Switcher - Cyberpunk Style */
+        .lang-switcher-corner {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .lang-btn {
+            padding: 8px 14px;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1) 0%, rgba(189, 0, 255, 0.1) 100%);
+            border: 1px solid rgba(0, 255, 255, 0.4);
+            border-radius: 4px;
+            color: #00ffff;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2), inset 0 0 10px rgba(0, 255, 255, 0.05);
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+        }
+        
+        .lang-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2) 0%, rgba(189, 0, 255, 0.2) 100%);
+            border-color: rgba(0, 255, 255, 0.7);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4), inset 0 0 15px rgba(0, 255, 255, 0.1);
+            text-shadow: 0 0 12px rgba(0, 255, 255, 0.8);
+        }
+        
+        .lang-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 25px rgba(189, 0, 255, 0.5), inset 0 0 20px rgba(189, 0, 255, 0.15);
+            border-color: rgba(189, 0, 255, 0.7);
+        }
+    </style>
+
+    <!-- 引入 Three.js -->
+    <!-- 使用本地路径，确保无需外网即可访问 -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "/lib/three/build/three.module.js",
+            "three/addons/": "/lib/three/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+    <!-- Language Switcher -->
+    <div class="lang-switcher-corner">
+        <button class="lang-btn" id="langBtn" onclick="toggleLanguageAndReload()">🌍 中文</button>
+    </div>
+
+    <!-- 调试控制台 -->
+    <div id="debug-console"></div>
+
+    <!-- 加载屏 / Loading Screen -->
+    <div id="loader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text" id="loaderText">INITIALIZING SYSTEM</div>
+        <div id="loading-status" style="margin-top:10px; font-size: 10px; color: #666;"></div>
+    </div>
+
+    <!-- 3D 画布容器 -->
+    <div id="canvas-container"></div>
+
+    <!-- 触摸层 - 专门用于接收触摸事件，确保在最上层 -->
+    <div id="touch-layer" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 999; touch-action: none;"></div>
+
+    <!-- UI 覆盖层 (pointer-events: none) -->
+    <div id="ui-layer">
+        <!-- 顶部 -->
+        <div class="header" id="header-area">
+            <div class="brand-badge">◈ Gestalt</div>
+            <div class="status-badge">
+                <div class="status-dot" id="status-dot"></div>
+                <span id="status-text">CONNECTING</span>
+            </div>
+            <div class="status-badge">
+                <span>👥</span>
+                <span id="audience-count">0</span>
+            </div>
+        </div>
+
+        <!-- 中心提示 -->
+        <div class="center-guide" id="guide">
+            <div class="guide-icon">👆</div>
+            <div class="guide-text">TOUCH TO INTERACT</div>
+        </div>
+
+        <!-- 右侧强度条 -->
+        <div class="intensity-meter">
+            <div class="intensity-fill" id="intensity-fill"></div>
+        </div>
+
+        <!-- 底部信息 -->
+        <div class="dashboard">
+            <div class="gesture-display">
+                <div class="gesture-label">CURRENT GESTURE</div>
+                <div class="gesture-value" id="gesture-name">IDLE</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 调试脚本：重写 console 以显示在屏幕上 -->
+    <script>
+        const consoleDiv = document.getElementById('debug-console');
+        const loadingStatus = document.getElementById('loading-status');
+        
+        function appendLog(msg, type) {
+            const line = document.createElement('div');
+            line.className = 'log-' + type;
+            line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            consoleDiv.appendChild(line);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            
+            // 同时也显示在加载屏上，方便查看初始化错误
+            if (type === 'error') {
+                loadingStatus.textContent = msg;
+                loadingStatus.style.color = '#ff3333';
+            }
+        }
+
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            appendLog(args.join(' '), 'info');
+        };
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            appendLog(args.join(' '), 'error');
+            // 如果出现错误，自动显示控制台
+            consoleDiv.style.display = 'block';
+        };
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            appendLog(args.join(' '), 'warn');
+        };
+
+        // 点击顶部区域 3 次切换调试台
+        let tapCount = 0;
+        document.getElementById('header-area').addEventListener('click', () => {
+            tapCount++;
+            if (tapCount === 3) {
+                consoleDiv.style.display = consoleDiv.style.display === 'none' ? 'block' : 'none';
+                tapCount = 0;
+            }
+        });
+
+        window.onerror = function(msg, source, lineno, colno, error) {
+            console.error(`${msg} (${source}:${lineno})`);
+        };
+    </script>
+
+    <!-- i18n Initialization -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.i18n) {
+                const lang = window.i18n.getCurrentLanguage();
+                const langBtn = document.getElementById('langBtn');
+                if (langBtn) {
+                    langBtn.textContent = lang === 'en' ? '🌍 中文' : '🌍 EN';
+                }
+                
+                // Update texts based on language
+                const loaderText = document.getElementById('loaderText');
+                if (loaderText) {
+                    loaderText.textContent = lang === 'zh' ? '系统初始化中' : 'INITIALIZING SYSTEM';
+                }
+                
+                const guideText = document.querySelector('.guide-text');
+                if (guideText) {
+                    guideText.textContent = lang === 'zh' ? '触摸屏幕交互' : 'TOUCH TO INTERACT';
+                }
+                
+                const gestureLabel = document.querySelector('.gesture-label');
+                if (gestureLabel) {
+                    gestureLabel.textContent = lang === 'zh' ? '当前手势' : 'CURRENT GESTURE';
+                }
+                
+                document.title = window.i18n.t('touch.title');
+            }
+        });
+    </script>
+
+    <!-- 应用入口 / App Entry -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
