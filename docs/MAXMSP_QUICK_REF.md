@@ -1,52 +1,120 @@
-# 🎯 Max MSP 连接 - 快速参考卡
+# 🎯 Max/MSP 连接 - 快速参考
 
 ## ⚡ 核心信息
 
 | 参数 | 值 |
 |------|-----|
-| **UDP 端口** | `7402` |
-| **接收对象** | `[udpreceive 7402]` |
-| **启动脚本** | `./start-audience.sh` |
-| **代码位置** | `server.js` 第 340-363 行 |
+| **演员 UDP 端口** | `7400` |
+| **观众 UDP 端口** | `7402` |
+| **接收对象** | `[udpreceive 7400]` 或 `[udpreceive 7402]` |
+| **模板工程** | `max-patches/Gestalt-Max:Msp Template Project/` |
 
-### 🎯 完整端口架构
+### 🎯 端口架构
 
 ```
-演员1  → 7400 → Pigments 1
-演员2  → 7401 → Pigments 2
-观众   → 7402 → Pigments 3
+演员1  → 7400 → Max/MSP → Pigments 1
+演员2  → 7401 → Max/MSP → Pigments 2
+观众   → 7402 → Max/MSP → Pigments 3
 ```
 
 ---
 
-## 📡 Max MSP 基础 Patch
+## 📦 打开模板工程
+
+1. 进入 `max-patches/Gestalt-Max:Msp Template Project/` 文件夹
+2. 双击打开 `Gestalt patch.maxpat`
+3. 加载 `reference sound/` 中的 Pigments 预设（可选）
+
+该模板已预配置好 OSC 接收和参数路由，可直接使用。
+
+---
+
+## 🎛️ 自定义映射：两种方式
+
+### 方式一：Web GUI 映射编辑器（推荐）⭐
+
+系统提供了可视化的映射编辑器，**无需编写代码**：
+
+1. 打开监控面板 `http://localhost:3002/?performer=audience`
+2. 点击左下角的 **映射编辑器** 按钮
+3. 在界面中：
+   - 选择输入源（手势、滑动强度、方向等）
+   - 设置 OSC 地址（如 `/pigments/CUTOFF1`）
+   - 调整数值范围和权重
+4. 点击保存，实时生效
+
+### 方式二：Max/MSP 端路由配置
+
+在声明式映射系统中，Web 端定义的 OSC 地址需与 Max/MSP 端的路由配置保持一致。配置涉及三个关键点：
+
+**（1）端口配置**
+
+`udpreceive` 对象的端口号需与系统分配一致：
+- 演员端：`[udpreceive 7400]`
+- 观众端：`[udpreceive 7402]`
+
+**（2）地址路由**
+
+`route` 对象中的 OSC 地址必须与 Web 端映射编辑器中配置的地址**完全一致**，包括大小写和斜杠格式：
 
 ```maxpat
-[udpreceive 7402]  ← 观众系统专用端口
-     |
-[print OSC]  ← 查看所有消息
-     |
-[route /audience]
-     |
-   你的处理...
+[udpreceive 7402]
+      |
+[oscparse]
+      |
+[route /pigments]
+      |
+[route /VC /CUTOFF1 /LFO1_RATE]
+   |       |           |
+[参数1]  [参数2]     [参数3]
 ```
+
+若地址不匹配，OSC 消息将被忽略。
+
+**（3）参数绑定**
+
+路由后的数值通过 `[参数ID $1]` 格式发送至 Pigments 合成器：
+
+```maxpat
+[route /CUTOFF1]
+      |
+[200 $1]          ← 200 是 Pigments 的 CUTOFF1 参数 ID
+      |
+[vst~ Pigments]
+```
+
+参数 ID 可通过 Pigments 的参数索引查询。
 
 ---
 
 ## 📊 OSC 消息速查表
 
-### 主要参数
+### 演员数据（端口 7400）
 
 | OSC 地址 | 类型 | 范围 | 说明 |
 |---------|------|------|------|
-| `/audience/swipe/intensity` | float | 0-0.3 | 滑动强度 |
-| `/audience/swipe/direction` | float | 0-360 | 滑动方向 |
+| `/performer1/hand/left/gesture` | int | 0-5 | 左手手势 |
+| `/performer1/hand/right/gesture` | int | 0-5 | 右手手势 |
+| `/performer1/body/{关键点}/x` | float | 0-1 | 身体 X 坐标 |
+| `/performer1/body/{关键点}/y` | float | 0-1 | 身体 Y 坐标 |
+| `/performer1/slider1` - `/slider8` | float | 0-1 | 控制滑块 |
+
+**身体关键点**: nose, left_shoulder, right_shoulder, left_elbow, right_elbow, left_wrist, right_wrist, left_hip, right_hip
+
+**手势类型**: 0=未知, 1=张开, 2=握拳, 3=指向, 4=竖拇指, 5=和平
+
+### 观众数据（端口 7402）
+
+| OSC 地址 | 类型 | 范围 | 说明 |
+|---------|------|------|------|
+| `/audience/swipe/intensity` | float | 0-0.3 | 滑动强度（30% 权重） |
+| `/audience/swipe/direction` | float | 0-360 | 滑动方向（角度） |
 | `/audience/swipe/velocity` | float | 0-0.3 | 滑动速度 |
 | `/audience/gesture/type` | int | 0-4 | 手势类型 |
 | `/audience/count` | int | 0-200+ | 在线人数 |
+| `/audience/keyboard/note` | int | 36-95 | MIDI 音符 |
 
-### 手势类型对照
-
+**手势类型对照**:
 ```
 0 = idle (静止)
 1 = swipe_up (向上)
@@ -57,86 +125,23 @@
 
 ---
 
-## 🔧 自定义映射位置
-
-### 打开文件
-
-```bash
-code /Users/sitongwu/Desktop/正式工程/osc/server.js
-```
-
-### 跳转到第 340 行
-
-按 `Cmd+G` (Mac) 或 `Ctrl+G` (Windows)，输入 `340`
-
-### 修改这段代码
-
-```javascript
-// 第 340-363 行
-const oscWeight = 0.3;
-
-// 🔥 在这里修改 OSC 地址和参数
-sendOSCMessage('/audience/swipe/intensity', avgIntensity * oscWeight);
-sendOSCMessage('/audience/swipe/direction', avgDirection);
-// ... 继续修改 ...
-```
-
----
-
-## 📝 常见修改示例
-
-### 1. 改变 OSC 地址
-
-```javascript
-// 原代码
-sendOSCMessage('/audience/swipe/intensity', avgIntensity * oscWeight);
-
-// 改为
-sendOSCMessage('/synth/volume', avgIntensity * oscWeight);
-```
-
-### 2. 改变数值范围
-
-```javascript
-// 原代码（0-0.3）
-sendOSCMessage('/audience/swipe/intensity', avgIntensity * oscWeight);
-
-// 改为 MIDI (0-127)
-sendOSCMessage('/audience/swipe/intensity', avgIntensity * oscWeight * 127);
-
-// 改为百分比 (0-100)
-sendOSCMessage('/audience/swipe/intensity', avgIntensity * oscWeight * 100);
-```
-
-### 3. 根据手势发送不同参数
-
-```javascript
-if (dominantGesture === 'swipe_up') {
-  sendOSCMessage('/synth/pitch', 1.0 + avgIntensity);
-} else if (dominantGesture === 'swipe_down') {
-  sendOSCMessage('/synth/pitch', 1.0 - avgIntensity);
-}
-```
-
----
-
 ## ✅ 测试流程
 
-1. **启动观众系统服务器**
+1. **启动系统**
    ```bash
-   ./start-audience.sh
+   ./start.sh
+   # 选择 1（本地模式）
    ```
-   **重要：必须使用此脚本启动，确保端口为 7402**
 
-2. **打开 Max Patch**
-   - 文件: `max-patches/audience-receiver.maxpat`
-   - 或创建: `[udpreceive 7402]` → `[print OSC]`
+2. **打开 Max 模板**
+   - 文件：`max-patches/Gestalt-Max:Msp Template Project/Gestalt patch.maxpat`
 
 3. **手机访问**
-   - 地址: `http://你的IP:3002/audience-touch/`
-   - 注意端口为 **3002**（不是 3000）
+   - 扫描监控面板上的二维码
+   - 或访问：`http://你的IP:3002/audience-touch/`
 
-4. **触摸测试**
+4. **测试**
+   - 在手机上触摸滑动
    - 观察 Max 控制台输出
 
 ---
@@ -145,56 +150,22 @@ if (dominantGesture === 'swipe_up') {
 
 ### 收不到消息？
 
-```maxpat
-[udpreceive 7402]  ← 确认端口！
-     |
-[print 测试]  ← 看不到输出？检查：
-```
-
-1. ✅ 使用 `./start-audience.sh` 启动
-2. ✅ 端口确实是 **7402**
-3. ✅ 有观众在线并触摸
+1. ✅ 检查端口号（演员 7400，观众 7402）
+2. ✅ 确保服务器正在运行（`./start.sh`）
+3. ✅ 有人在线并进行交互
 4. ✅ 检查防火墙设置
 
-### 数值不对？
+### OSC 地址不匹配？
 
-1. 检查 `oscWeight = 0.3`（第 341 行）
-2. 观众端需要触摸（强度才 > 0）
-3. 数值范围可能需要缩放
-
----
-
-## 📚 完整文档
-
-- **详细指南**: `MAXMSP_AUDIENCE_GUIDE.md`
-- **示例 Patch**: `max-patches/audience-receiver.maxpat`
-- **配置文件**: `audience-config.js`
+确保 Web 映射编辑器中的地址与 Max/MSP `route` 对象中的地址**完全一致**：
+- 大小写敏感
+- 斜杠格式一致
+- 无多余空格
 
 ---
 
-## 🎮 可用的变量
+## 📚 更多信息
 
-在 `server.js` 第 340 行，你可以使用：
-
-```javascript
-avgIntensity   // 平均强度 (0-1)
-avgDirection   // 平均方向 (0-360)
-avgDistance    // 平均距离 (0-1)
-avgVelocity    // 平均速度 (0-1)
-avgFingers     // 平均手指数 (1-5)
-dominantGesture // 主导手势 ('idle', 'swipe_up', 'swipe_down', 'swipe_left', 'swipe_right')
-audienceData.size // 观众总数
-activeCount    // 活跃观众数
-```
-
----
-
-## ⚙️ 修改后记得
-
-1. **保存文件** (`Cmd+S` / `Ctrl+S`)
-2. **重启服务器** (终端按 `Ctrl+C`，然后 `npm start`)
-3. **测试连接** (手机触摸观察 Max 输出)
-
----
-
-**快速联系：查看 `MAXMSP_AUDIENCE_GUIDE.md` 获取更多示例和详细说明**
+- **详细指南**：[MAXMSP_AUDIENCE_GUIDE.md](MAXMSP_AUDIENCE_GUIDE.md)
+- **模板工程**：`max-patches/Gestalt-Max:Msp Template Project/`
+- **Pigments 预设**：`max-patches/Gestalt-Max:Msp Template Project/reference sound/`
