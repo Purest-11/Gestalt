@@ -2,7 +2,7 @@
 
 > **A framework that turns your audience into co-creators**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 
 **[English](#what-is-this) | [中文](README_CN.md)**
 
@@ -161,7 +161,7 @@ If you use Gestalt in your research or creative work:
 
 ## 📄 License
 
-MIT License — Free to use, modify, and distribute
+CC BY-NC 4.0 — Free to use, modify, and share for **non-commercial purposes** with attribution
 
 ---
 

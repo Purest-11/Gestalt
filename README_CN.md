@@ -2,7 +2,7 @@
 
 > **让观众成为你作品的一部分**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 
 **[English](README.md) | [中文](#这是什么)**
 
@@ -165,7 +165,7 @@ MacBook Pro (M 系列) 测试结果：
 
 ## 📄 许可证
 
-MIT License — 可自由使用、修改、分发
+CC BY-NC 4.0 — 可自由使用、修改、分享，**但禁止商业用途**，需署名作者
 
 ---
 
